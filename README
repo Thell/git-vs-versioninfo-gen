@@ -1,0 +1,47 @@
+Git - Visual Studio VERSIONINFO Generator
+=========================================
+
+Overview
+--------
+This project uses an MS-DOS batch file to parse the output of git-describe and
+generate a header to be included in a project's file version resource.  So that
+it can be used by people who are building from source without having git the
+script uses development stage build version numbering based on a git tag when
+git is available and a version file or default value for when git is not.
+
+Usage
+-----
+This can be run from the command line.  It uses the following arguments:
+
+  [--force] [CACHE_PATH] OUT_FILE
+
+  --force - ignore the cached output of a previous run even if the git-describe
+            version hasn't changed.
+  CACHE_PATH  - Path for non-tracked file to store git-describe version.
+  OUT_FILE - Path to writable file that is included in the project's rc file.
+
+  Example pre-build event:
+  CALL $(SolutionDir)..\scripts\GIT-VS-VERSION-GEN.bat $(IntDir) $(SolutionDir)..\src\fileversioninfo.h
+
+Notes
+-----
+Generated definitions:
+  - GEN_VER_VERSION_STRING
+    Terminated string of the git tag minus the leading 'v'.
+
+  - GEN_VER_DIGITAL_VERSION
+    16 bit int values representing Major, Minor, Stage, Commits.
+
+  - GEN_VER_COMMENT_STRING
+    Git tag message value with pre-release stage info appended.
+
+  - GEN_VER_PRIVATE_FLAG
+  - GEN_VER_PRIVATE_STRING
+    When HEAD is dirty flag is set.  String is set to 'Custom Build'.
+
+  - GEN_VER_PATCHED_FLAG
+    Set when there are commits between the tag and the commit being built.
+
+  - GEN_VER_PRERELEASE_FLAG
+    Set when the tag includes 'alpha', 'beta' or 'rc'.
+
