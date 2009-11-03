@@ -101,12 +101,12 @@ SET tmp=
 
 :: Exit early if a cached git built version matches the current version.
 IF EXIST "%HEADER_OUT_FILE%" (
-  IF %FORCE% EQU 1 DEL %CACHE_FILE%
+  IF [%FORCE%] EQU [1] DEL %CACHE_FILE%
   SET FORCE=0
   IF EXIST "%CACHE_FILE%" (
     FOR /F "tokens=*" %%A IN (%CACHE_FILE%) DO (
       SET strTMP_FILE_VERSION=%%A
-      IF %strTMP_FILE_VERSION% == %strFILE_VERSION% (
+      IF "%strTMP_FILE_VERSION%" == "%strFILE_VERSION%" (
         ECHO Build version is assumed unchanged from commit: %strFILE_VERSION%.
         GOTO :EOF
       )
@@ -239,9 +239,7 @@ ECHO Is PreRelease: %fPRE_RELEASE%
 GOTO :EOF
 
 :USAGE
-ECHO usage: [--force] CACHE_PATH OUT_FILE
-ECHO.
-ECHO  [--force] [CACHE_PATH] OUT_FILE
+ECHO usage: [--force] [CACHE_PATH] OUT_FILE
 ECHO.
 ECHO  --force - ignore the cached output of a previous run even if the git-describe
 ECHO            version hasn't changed.
@@ -249,4 +247,4 @@ ECHO  CACHE_PATH  - Path for non-tracked file to store git-describe version.
 ECHO  OUT_FILE - Path to writable file that is included in the project's rc file.
 ECHO.
 ECHO  Example pre-build event:
-ECHO  CALL $(SolutionDir)..\scripts\GIT-VS-VERSION-GEN.bat $(IntDir) $(SolutionDir)..\src\fileversioninfo.h
+ECHO  CALL $(SolutionDir)..\scripts\GIT-VS-VERSION-GEN.bat "$(IntDir)\" "$(SolutionDir)..\src\gen-versioninfo.h"
