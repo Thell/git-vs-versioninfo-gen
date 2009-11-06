@@ -43,7 +43,7 @@ IF "%1" == "--force" SET fFORCE=1& SHIFT
 :: Un-documented switch
 IF "%1" == "--test" GOTO TEST
 
-IF EXIST %1\NUL (
+IF EXIST %~1\NUL (
   :: %1 is a path
   SET CACHE_FILE=%~p1\%VERSION_FILE%
   SHIFT
@@ -355,7 +355,7 @@ IF DEFINED HEADER_OUT_FILE (
 GOTO :EOF
 
 :: --------------------
-:HEADER_OUT
+:OUT_HEADER
 :: --------------------
 ECHO //GIT-VS-VERSION-GEN.bat generated resource header. >%HEADER_OUT_FILE%
 ECHO #define GEN_VER_VERSION_STRING "%strFILE_VERSION%\0" >>%HEADER_OUT_FILE%
