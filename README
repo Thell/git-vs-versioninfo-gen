@@ -4,24 +4,29 @@ Git - Visual Studio VERSIONINFO Generator
 Overview
 --------
 This project uses an MS-DOS batch file to parse the output of git-describe and
-generate a header to be included in a project's file version resource.  So that
-it can be used by people who are building from source without having git the
-script uses development stage build version numbering based on a git tag when
-git is available and a version file or default value for when git is not.
+generate a header to be included in a project's file version resource.  For
+building from source without having git the script can use a version file or
+embedded default value.
 
 Usage
 -----
 This can be run from the command line.  It uses the following arguments:
 
-  [--force] [CACHE_PATH] OUT_FILE
+	usage: [--help] ^| [--force] [CACHE PATH] [OUT FILE]
 
-  --force - ignore the cached output of a previous run even if the git-describe
-            version hasn't changed.
-  CACHE_PATH  - Path for non-tracked file to store git-describe version.
-  OUT_FILE - Path to writable file that is included in the project's rc file.
+	When called without arguments version information writes to console.
 
-  Example pre-build event:
-  CALL $(SolutionDir)..\scripts\GIT-VS-VERSION-GEN.bat $(IntDir) $(SolutionDir)..\src\fileversioninfo.h
+	--help      - displays this output.
+
+	--force     - Ignore cached version information.
+	CACHE PATH  - Path for non-tracked file to store git-describe version.
+	OUT FILE    - Path to writable file that is included in the project's rc file.
+
+	Version information is expected to be in the format: vMajor.Minor.Fix[-stage#]
+	Where -stage# is alpha, beta, or rc. ( example: v1.0.0-alpha0 )
+
+	Example pre-build event:
+	CALL $(SolutionDir)GIT-VS-VERSION-GEN.bat "$(IntDir)\" "$(SolutionDir)..\src\gen-versioninfo.h"
 
 Notes
 -----
@@ -30,7 +35,10 @@ Generated definitions:
     Terminated string of the git tag minus the leading 'v'.
 
   - GEN_VER_DIGITAL_VERSION
-    16 bit int values representing Major, Minor, Stage, Commits.
+    16 bit int values representing Major, Minor, Fix, Patches.
+
+  - GEN_VER_VERSION_HEX
+    Concatenated hex representation of padded Major, Minor, Fix, Patches.
 
   - GEN_VER_COMMENT_STRING
     Git tag message value with pre-release stage info appended.
@@ -44,4 +52,9 @@ Generated definitions:
 
   - GEN_VER_PRERELEASE_FLAG
     Set when the tag includes 'alpha', 'beta' or 'rc'.
+
+Executing the script with the --test argument will generate an example
+repository with tagged commits from an alpha stage to next full version
+release along with a few maintenance patches and examples of building from
+non-tagged commits and then output the data in comma separated format.
 
