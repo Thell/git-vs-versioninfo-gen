@@ -334,9 +334,50 @@ GOTO :EOF
 :PREP_OUT
 :: --------------------
 SET csvFILE_VERSION=%nbMAJOR_PART%,%nbMINOR_PART%,%nbFIX_PART%,%nbPATCHES_PART%
+SET hexFILE_VERSION=
+CALL :SET_HEX
+
 IF NOT %fPRIVATE% EQU 0 SET fPRIVATE=VS_FF_PRIVATEBUILD
 IF NOT %fPATCHED% EQU 0 SET fPATCHED=VS_FF_PATCHED
 IF NOT %fPRE_RELEASE% EQU 0 SET fPRE_RELEASE=VS_FF_PRERELEASE
+GOTO :EOF
+
+:: --------------------
+:SET_HEX
+:: --------------------
+:: Iterate Major, Minor, Fix, Patches as set in csvFILEVERSION and convert to
+:: hex while appending to the hexFILE_VERION string to give a padded 32bit
+:: end result. ie: v1.0.1.34 = 0x0001000000010022
+SET hex_values=0123456789ABCDEF
+
+FOR /F "tokens=1-4 delims=," %%A IN ("%csvFILE_VERSION%") DO (
+  CALL :int2hex %%A
+  CALL :int2hex %%B
+  CALL :int2hex %%C
+  CALL :int2hex %%D
+)
+
+SET hexFILE_VERSION=0x%hexFILE_VERSION%
+SET hex_values=
+
+GOTO :EOF
+
+:int2hex
+SETLOCAL ENABLEDELAYEDEXPANSION
+SET /A pad=4
+SET /A iVal=%1
+
+:hex_loop
+SET /A pad=%pad% - 1
+SET /A hVal=%iVal% %% 16
+SET hVal=!hex_values:~%hVal%,1!
+SET hex_word=%hVal%%hex_word%
+SET /A iVal=%iVal% / 16
+IF %iVal% GTR 0 GOTO hex_loop
+
+:hex_pad_loop
+FOR /L %%A in (1,1,%pad%) DO SET hex_word=0!hex_word!
+ENDLOCAL& SET hexFILE_VERSION=%hexFILE_VERSION%%hex_word%
 GOTO :EOF
 
 :: --------------------
@@ -357,28 +398,29 @@ GOTO :EOF
 :: --------------------
 :OUT_HEADER
 :: --------------------
-ECHO //GIT-VS-VERSION-GEN.bat generated resource header. >%HEADER_OUT_FILE%
-ECHO #define GEN_VER_VERSION_STRING "%strFILE_VERSION%\0" >>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_DIGITAL_VERSION %csvFILE_VERSION% >>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_COMMENT_STRING "%strCOMMENT%\0" >>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_PRIVATE_FLAG %fPRIVATE% >>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_PRIVATE_STRING "%strPRIVATE%\0" >>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_PATCHED_FLAG %fPATCHED% >>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_PRERELEASE_FLAG %fPRE_RELEASE% >>%HEADER_OUT_FILE%
+ECHO //GIT-VS-VERSION-GEN.bat generated resource header.>%HEADER_OUT_FILE%
+ECHO #define GEN_VER_VERSION_STRING   "%strFILE_VERSION%\0" >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_DIGITAL_VERSION  %csvFILE_VERSION% >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_VERSION_HEX      %hexFILE_VERSION% >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_COMMENT_STRING   "%strCOMMENT%\0" >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_PRIVATE_FLAG     %fPRIVATE% >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_PRIVATE_STRING   "%strPRIVATE%\0" >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_PATCHED_FLAG     %fPATCHED% >> %HEADER_OUT_FILE%
+ECHO #define GEN_VER_PRERELEASE_FLAG  %fPRE_RELEASE% >> %HEADER_OUT_FILE%
 
 :: --------------------
 :CON_OUT
 :: --------------------
 IF DEFINED fQUIET GOTO :EOF
-ECHO Version String:: %strFILE_VERSION%
-ECHO Digital Version ID: %csvFILE_VERSION%
-ECHO Comment: %strCOMMENT%
+ECHO Version String::      %strFILE_VERSION%
+ECHO Digital Version ID:   %csvFILE_VERSION%
+ECHO Hex Version ID:       %hexFILE_VERSION%
+ECHO Comment:              %strCOMMENT%
 ECHO Private Build String: %strPRIVATE%
-ECHO Is Private Build: %fPRIVATE%
-ECHO Is Patched: %fPATCHED%
-ECHO Is PreRelease: %fPRE_RELEASE%
+ECHO Is Private Build:     %fPRIVATE%
+ECHO Is Patched:           %fPATCHED%
+ECHO Is PreRelease:        %fPRE_RELEASE%
 GOTO :EOF
-
 
 :: --------------------
 :TEST
@@ -429,7 +471,7 @@ CALL git commit --allow-empty -m "Maint Work on v1.0.0.2" >NUL
 CALL git tag -a v1.0.0.2 -m "Test v1.0.0.2"
 
 :: Generate the output
-ECHO TAG, Version, Maj, Min, Fix, Patches (from %COUNT_PATCHES_FROM%), PreRelease, Private, Patched, Comment
+ECHO TAG, Version, Hex, Maj, Min, Fix, Patches (from %COUNT_PATCHES_FROM%), PreRelease, Private, Patched, Comment
 
 SET git_cmd=git for-each-ref --format=%%(refname:short) refs/tags/
 FOR /F "tokens=* usebackq" %%A IN (`"%git_cmd%"`) DO (
@@ -503,7 +545,7 @@ GOTO :EOF
 :: --------------------
 SET TEST_OUT_STRING=%TEST_OUT_STRING%, %strFILE_VERSION%
 SET csvFILE_VERSION=%csvFILE_VERSION:,=, %
-SET TEST_OUT_STRING=%TEST_OUT_STRING%, %csvFILE_VERSION%
+SET TEST_OUT_STRING=%TEST_OUT_STRING%, %csvFILE_VERSION%, %hexFILE_VERSION%
 SET TEST_OUT_STRING=%TEST_OUT_STRING%, %fPRE_RELEASE%, %fPRIVATE%, %fPATCHED%, %strCOMMENT%
 GOTO :EOF
 
