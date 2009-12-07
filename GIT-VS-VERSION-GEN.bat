@@ -93,6 +93,7 @@ REM ===================
 REM Entry Point
 REM ===================
 :START
+ECHO.
 CALL :INIT_VARS
 CALL :GET_VERSION_STRING
 IF DEFINED fGIT_AVAILABLE (
