@@ -147,8 +147,8 @@ IF NOT ERRORLEVEL 1 (
   CALL :PARSE_GIT_STRING
 ) ELSE (
   :: Use the VERSION_FILE if it exists.
-  IF EXIST %VERSION_FILE% (
-    FOR /F "tokens=3" %%A IN (%VERSION_FILE%) DO (
+  IF EXIST "%VERSION_FILE%" (
+    FOR /F "tokens=3" %%A IN ("%VERSION_FILE%") DO (
       SET strFILE_VERSION=%%A
     )
   ) ELSE (
@@ -183,9 +183,9 @@ GOTO :EOF
 :: Exit early if a cached git built version matches the current version.
 IF DEFINED HEADER_OUT_FILE (
   IF EXIST "%HEADER_OUT_FILE%" (
-    IF [%fFORCE%] EQU [1] DEL %CACHE_FILE%
+    IF [%fFORCE%] EQU [1] DEL "%CACHE_FILE%"
     IF EXIST "%CACHE_FILE%" (
-      FOR /F "tokens=*" %%A IN (%CACHE_FILE%) DO (
+      FOR /F "tokens=*" %%A IN ("%CACHE_FILE%") DO (
         IF "%%A" == "%strFILE_VERSION%" (
           IF NOT DEFINED fQUIET (
             ECHO Build version is assumed unchanged from: %strFILE_VERSION%.
@@ -398,15 +398,15 @@ GOTO :EOF
 :: --------------------
 :OUT_HEADER
 :: --------------------
-ECHO //GIT-VS-VERSION-GEN.bat generated resource header.>%HEADER_OUT_FILE%
-ECHO #define GEN_VER_VERSION_STRING   "%strFILE_VERSION%\0" >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_DIGITAL_VERSION  %csvFILE_VERSION% >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_VERSION_HEX      %hexFILE_VERSION% >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_COMMENT_STRING   "%strCOMMENT%\0" >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_PRIVATE_FLAG     %fPRIVATE% >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_PRIVATE_STRING   "%strPRIVATE%\0" >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_PATCHED_FLAG     %fPATCHED% >> %HEADER_OUT_FILE%
-ECHO #define GEN_VER_PRERELEASE_FLAG  %fPRE_RELEASE% >> %HEADER_OUT_FILE%
+ECHO //GIT-VS-VERSION-GEN.bat generated resource header.>"%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_VERSION_STRING   "%strFILE_VERSION%\0" >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_DIGITAL_VERSION  %csvFILE_VERSION% >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_VERSION_HEX      %hexFILE_VERSION% >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_COMMENT_STRING   "%strCOMMENT%\0" >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_PRIVATE_FLAG     %fPRIVATE% >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_PRIVATE_STRING   "%strPRIVATE%\0" >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_PATCHED_FLAG     %fPATCHED% >> "%HEADER_OUT_FILE%"
+ECHO #define GEN_VER_PRERELEASE_FLAG  %fPRE_RELEASE% >> "%HEADER_OUT_FILE%"
 
 :: --------------------
 :CON_OUT
