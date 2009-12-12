@@ -69,12 +69,13 @@ GOTO START
 :: --------------------
 :USAGE
 :: --------------------
-ECHO usage: [--help] ^| [--force] [CACHE PATH] [OUT FILE]
+ECHO usage: [--help] ^| ^| [--quiet] [--force] [CACHE PATH] [OUT FILE]
 ECHO.
 ECHO  When called without arguments version information writes to console.
 ECHO.
 ECHO  --help      - displays this output.
 ECHO.
+ECHO  --quiet     - Suppress console output.
 ECHO  --force     - Ignore cached version information.
 ECHO  CACHE PATH  - Path for non-tracked file to store git-describe version.
 ECHO  OUT FILE    - Path to writable file that is included in the project's rc file.
