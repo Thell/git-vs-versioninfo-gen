@@ -12,12 +12,15 @@ Usage
 -----
 This can be run from the command line.  It uses the following arguments:
 
-	usage: [--help] ^| [--force] [CACHE PATH] [OUT FILE]
+	usage: [--help] ^| ^| [--test] ^| [--quiet] [--force] [CACHE PATH] [OUT FILE]
 
 	When called without arguments version information writes to console.
 
 	--help      - displays this output.
 
+	--test      - run internal tests to demonstrate output with current settings.
+
+	--quiet     - Supress console output.
 	--force     - Ignore cached version information.
 	CACHE PATH  - Path for non-tracked file to store git-describe version.
 	OUT FILE    - Path to writable file that is included in the project's rc file.
@@ -57,4 +60,25 @@ Executing the script with the --test argument will generate an example
 repository with tagged commits from an alpha stage to next full version
 release along with a few maintenance patches and examples of building from
 non-tagged commits and then output the data in comma separated format.
+
+Sample test output:
+TAG, Version, Hex, Maj, Min, Fix, Patches (from fix), PreRelease, Private, Patched, Comment
+v1.0.0, 1.0.0, 1, 0, 0, 24, 0x0001000000000018, 0, 0, 0, Major Version Release
+v1.0.0-alpha0, 1.0.0.alpha0, 1, 0, 0, 0, 0x0001000000000000, VS_FF_PRERELEASE, 0, 0, Alpha Release 0
+v1.0.0-alpha1, 1.0.0.alpha1, 1, 0, 0, 4, 0x0001000000000004, VS_FF_PRERELEASE, 0, 0, Alpha Release 1
+v1.0.0-beta0, 1.0.0.beta0, 1, 0, 0, 8, 0x0001000000000008, VS_FF_PRERELEASE, 0, 0, Beta Release 0
+v1.0.0-beta1, 1.0.0.beta1, 1, 0, 0, 12, 0x000100000000000C, VS_FF_PRERELEASE, 0, 0, Beta Release 1
+v1.0.0-rc0, 1.0.0.rc0, 1, 0, 0, 16, 0x0001000000000010, VS_FF_PRERELEASE, 0, 0, Release Candidate 0
+v1.0.0-rc1, 1.0.0.rc1, 1, 0, 0, 20, 0x0001000000000014, VS_FF_PRERELEASE, 0, 0, Release Candidate 1
+v1.0.0.1, 1.0.0.1, 1, 0, 0, 28, 0x000100000000001C, 0, 0, 0, Maintanence Version Release
+v1.0.0.2, 1.0.0.2, 1, 0, 0, 30, 0x000100000000001E, 0, 0, 0, Maintanence Version Release
+v1.0.1-alpha0, 1.0.1.alpha0, 1, 0, 1, 0, 0x0001000000010000, VS_FF_PRERELEASE, 0, 0, Alpha Release 0
+v1.0.0-rc1-3-g4b88e7f, 1.0.0.rc1.3.g4b88e, 1, 0, 0, 23, 0x0001000000000017, VS_FF_PRERELEASE, 0, VS_FF_PATCHED, Release Candidate 1
+v1.0.0-rc1-3-g4b88e7f, 1.0.0.rc1.3.g4b88e.dirty, 1, 0, 0, 23, 0x0001000000000017, VS_FF_PRERELEASE, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Release Candidate 1
+v1.0.0, 1.0.0.dirty, 1, 0, 0, 24, 0x0001000000000018, 0, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Major Version Release
+v1.0.0-1-g8321e15, 1.0.0.1.g8321e, 1, 0, 0, 25, 0x0001000000000019, 0, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Major Version Release
+v1.0.0-custom, 1.0.0.custom, 1, 0, 0, 25, 0x0001000000000019, 0, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Major Version Release
+v1.0.0.1, 1.0.0.1.dirty, 1, 0, 0, 28, 0x000100000000001C, 0, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Major Version Release
+v1.0.0.1-1-gc2c9f0d, 1.0.0.1.1.gc2c9f, 1, 0, 0, 29, 0x000100000000001D, 0, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Major Version Release
+v1.0.0.1-custom, 1.0.0.1.custom, 1, 0, 0, 29, 0x000100000000001D, 0, VS_FF_PRIVATEBUILD, VS_FF_PATCHED, Major Version Release
 
