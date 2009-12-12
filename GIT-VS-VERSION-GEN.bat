@@ -183,7 +183,6 @@ GOTO :EOF
 IF DEFINED HEADER_OUT_FILE (
   IF EXIST "%HEADER_OUT_FILE%" (
     IF [%fFORCE%] EQU [1] DEL %CACHE_FILE%
-    SET fFORCE=
     IF EXIST "%CACHE_FILE%" (
       FOR /F "tokens=*" %%A IN (%CACHE_FILE%) DO (
         IF "%%A" == "%strFILE_VERSION%" (
