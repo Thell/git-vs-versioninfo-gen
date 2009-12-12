@@ -195,9 +195,8 @@ IF DEFINED HEADER_OUT_FILE (
       )
     )
   )
-  IF DEFINED CACHE_FILE (
-    ECHO %strFILE_VERSION%> "%CACHE_FILE%"
-  )
+
+  ECHO %strFILE_VERSION%> "%CACHE_FILE%"
 )
 GOTO :EOF
 
@@ -283,7 +282,7 @@ IF [%USE_PRERELEASE_TAGS%] == [0] (
     SET nbPATCHES_PART=%%A
   )
 )
-IF NOT DEFINED nbPATCHES_PART nbPATCHES_PART=0
+IF NOT DEFINED nbPATCHES_PART SET nbPATCHES_PART=0
 SET tmp=
 GOTO :EOF
 
@@ -429,8 +428,9 @@ GOTO :EOF
 :: Create the test directory & repo
 SET TERM=
 SET TESTING=1
-MKDIR git-vs-version-test
-PUSHD git-vs-version-test
+SET git-vs-version-test-dir=git-vs-version-test
+MKDIR %git-vs-version-test-dir%
+PUSHD %git-vs-version-test-dir%
 CALL git init >NUL 2>&1
 IF ERRORLEVEL 1 (
   ECHO Test requires git.
@@ -486,7 +486,7 @@ FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 :: Builder staged a file.
-CALL touch README
+CALL touch README >NUL
 CALL git add README
 FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
@@ -529,7 +529,7 @@ ECHO.
 
 :: Cleanup the directory
 POPD
-RMDIR /S /Q git-vs-version-test
+RMDIR /S /Q %git-vs-version-test-dir%
 GOTO :EOF
 
 :: --------------------
