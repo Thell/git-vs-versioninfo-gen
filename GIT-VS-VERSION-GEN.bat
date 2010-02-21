@@ -36,21 +36,22 @@ SET USE_PRERELEASE_TAGS=1
 :: Console output only.
 IF [%1] == [] GOTO START
 
-IF "%1" == "--help" GOTO USAGE
-IF "%1" == "--quiet" SET fQUIET=1& SHIFT
-IF "%1" == "--force" SET fFORCE=1& SHIFT
+IF "%~1" == "--help" GOTO USAGE
+IF "%~1" == "--quiet" SET fQUIET=1& SHIFT
+IF "%~1" == "--force" SET fFORCE=1& SHIFT
 
 :: Un-documented switch
-IF "%1" == "--test" GOTO TEST
+IF "%~1" == "--test" GOTO TEST
 
 IF EXIST %~1\NUL (
   :: %1 is a path
-  SET CACHE_FILE=%~p1\%VERSION_FILE%
+  SET CACHE_FILE=%~s1\%VERSION_FILE%
   SHIFT
 )
+
 IF [%~nx1] NEQ [] (
   :: %1 is a file
-  SET HEADER_OUT_FILE=%~f1
+  SET HEADER_OUT_FILE=%~fs1
   SHIFT
 )
 :: This should always be the last argument.
@@ -62,6 +63,7 @@ IF DEFINED fQUIET (
 )
 
 IF DEFINED CACHE_FILE (
+  SET CACHE_FILE=%CACHE_FILE:\\=\%
   IF NOT DEFINED HEADER_OUT_FILE GOTO USAGE
 )
 GOTO START
@@ -148,7 +150,7 @@ IF NOT ERRORLEVEL 1 (
 ) ELSE (
   :: Use the VERSION_FILE if it exists.
   IF EXIST "%VERSION_FILE%" (
-    FOR /F "tokens=3" %%A IN ("%VERSION_FILE%") DO (
+    FOR /F "tokens=3" %%A IN (%VERSION_FILE%) DO (
       SET strFILE_VERSION=%%A
     )
   ) ELSE (
@@ -185,7 +187,7 @@ IF DEFINED HEADER_OUT_FILE (
   IF EXIST "%HEADER_OUT_FILE%" (
     IF [%fFORCE%] EQU [1] DEL "%CACHE_FILE%"
     IF EXIST "%CACHE_FILE%" (
-      FOR /F "tokens=*" %%A IN ("%CACHE_FILE%") DO (
+      FOR /F "tokens=*" %%A IN (%CACHE_FILE%) DO (
         IF "%%A" == "%strFILE_VERSION%" (
           IF NOT DEFINED fQUIET (
             ECHO Build version is assumed unchanged from: %strFILE_VERSION%.
