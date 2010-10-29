@@ -99,6 +99,7 @@ ECHO.
 CALL :INIT_VARS
 CALL :GET_VERSION_STRING
 IF DEFINED fGIT_AVAILABLE (
+  IF DEFINED fLEAVE_NOW GOTO END
   IF DEFINED CACHE_FILE (
     CALL :CHECK_CACHE
   )
@@ -172,6 +173,15 @@ FOR /F "tokens=*" %%A IN ('"git describe --abbrev=5 HEAD"') DO (
 :: commit hasn't been made it should still be marked as dirty and patched.
 SET tmp=
 CALL git update-index -q --refresh >NUL 2>&1
+IF ERRORLEVEL 1 (
+  IF [%fFORCE%] EQU [1] (
+    verify > nul
+  ) ELSE (
+    ECHO >> The working tree index is not prepared for build testing!
+    ECHO >> Please check git status or use --force to ignore the index state.
+    SET fLEAVE_NOW=1
+  )
+)
 FOR /F %%A IN ('git diff-index --name-only HEAD --') DO SET tmp=%%A
 IF NOT "%tmp%" == "" (
   SET strFILE_VERSION=%strFILE_VERSION%-dirty
