@@ -549,7 +549,7 @@ CALL :TEST_VERSION %tmp%
 
 :: Builder creates own tag
 CALL git tag v1.0.0.1-custom -m "Modified Maint Release Tag"
-FOR /F "tokens=2 delims=v delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 ECHO.
