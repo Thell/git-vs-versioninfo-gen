@@ -154,7 +154,7 @@ IF NOT ERRORLEVEL 1 (
   :: Use the VERSION_FILE if it exists.
   IF EXIST "%VERSION_FILE%" (
     FOR /F "tokens=3" %%A IN (%VERSION_FILE%) DO (
-      SET strFILE_VERSION=v%%A
+      SET strFILE_VERSION=%%A
     )
   ) ELSE (
     :: Default to the DEFAULT_VERSION
@@ -163,16 +163,18 @@ IF NOT ERRORLEVEL 1 (
 )
 SET strFILE_VERSION=%strFILE_VERSION:~1%
 SET strFILE_VERSION=%strFILE_VERSION:-=.%
+::ECHO %strFILE_VERSION%
 ::ECHO "LEAVE GET_VERSION_STRING"
 GOTO :EOF
 
 :: --------------------
 :PARSE_GIT_STRING
 :: --------------------
-set strFILE_VERSION=
+::FOR /F "tokens=*" %%A IN ('"git describe --abbrev=5 HEAD"') DO (
 FOR /F "tokens=2 delims=v" %%A IN ('"git describe --abbrev=5 HEAD"') DO (
   SET strFILE_VERSION=v%%A
 )
+::echo PARSE_GIT_STRING_A-%strFILE_VERSION%
 :: If HEAD is dirty then this is not part of an official build and even if a
 :: commit hasn't been made it should still be marked as dirty and patched.
 SET tmp=
@@ -186,11 +188,12 @@ IF ERRORLEVEL 1 (
     SET fLEAVE_NOW=1
   )
 )
-set tmp=
-FOR /F "tokens=2 delims=v" %%A IN ('git diff-index --name-only HEAD --') DO SET tmp=%%A
-IF NOT "%tmp%" == "" (
-  SET strFILE_VERSION=v%strFILE_VERSION%-dirty
+FOR /F %%A IN ('git diff-index --name-only HEAD --') DO (
+SET tmp=%%A
+::ECHO PARSE_GIT_STRING_B-%tmp%
+CALL :check_dirty_vesion %%A
 )
+
 SET tmp=
 GOTO :EOF
 
@@ -501,55 +504,54 @@ CALL git tag -a v1.0.0.2 -m "Test v1.0.0.2"
 ECHO TAG, Version, Hex, Maj, Min, Fix, Patches (from %COUNT_PATCHES_FROM%), PreRelease, Private, Patched, Comment
 
 SET git_cmd=git for-each-ref --format=%%(refname:short) refs/tags/
-FOR /F "tokens=2 delims=v usebackq" %%A IN (`"%git_cmd%"`) DO (
-  CALL git reset --hard >NUL
-  REM CALL git reset --hard %%A >NUL
+FOR /F "tokens=* usebackq" %%A IN (`"%git_cmd%"`) DO (
+  CALL :git_reset_hard %%A
   CALL :TEST_VERSION %%A
 )
 
 :: Builder checked out the parent of v1.0.0
 CALL git reset --hard v1.0.0~1 >NUL
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 :: Builder staged a file.
 CALL touch README >NUL
 CALL git add README
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 :: Builder checks out a tagged release and stages a file
 CALL git reset --hard v1.0.0 >NUL
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL touch README
 CALL git add README
 CALL :TEST_VERSION %tmp%
 
 :: Builder commits that file.
 CALL git commit -m "Modified Release" >NUL
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 :: Builder creates own tag
 CALL git tag v1.0.0-custom -m "Modified Release Tag"
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 :: Builder checked out a maint release and staged a file
 CALL git reset --hard v1.0.0.1 >NUL
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL touch README
 CALL git add README
 CALL :TEST_VERSION %tmp%
 
 :: Builder commits that file.
 CALL git commit -m "Modified Maint Release" >NUL
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 :: Builder creates own tag
 CALL git tag v1.0.0.1-custom -m "Modified Maint Release Tag"
-FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
+FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp=%%A
 CALL :TEST_VERSION %tmp%
 
 ECHO.
@@ -557,6 +559,23 @@ ECHO.
 :: Cleanup the directory
 POPD
 RMDIR /S /Q %git-vs-version-test-dir%
+GOTO :EOF
+
+:: git reset_hard
+:git_reset_hard
+SET _input_version=%1
+CALL git reset --hard %_input_version%  >NUL
+SET _input_version=
+GOTO :EOF
+
+:check_dirty_vesion
+
+SET _tmp=%1
+::echo mark_dirty_vesion-%_tmp%
+if [%_tmp%] NEQ [] (
+  SET strFILE_VERSION=%strFILE_VERSION%-dirty
+)
+SET _tmp=
 GOTO :EOF
 
 :: --------------------
