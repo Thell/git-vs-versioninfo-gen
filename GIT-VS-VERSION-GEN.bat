@@ -188,12 +188,11 @@ IF ERRORLEVEL 1 (
     SET fLEAVE_NOW=1
   )
 )
-FOR /F %%A IN ('git diff-index --name-only HEAD --') DO (
-SET tmp=%%A
-::ECHO PARSE_GIT_STRING_B-%tmp%
-CALL :check_dirty_vesion %%A
-)
 
+FOR /F %%A IN ('git diff-index --name-only HEAD --') DO SET tmp=%%A
+IF NOT "%tmp%" == "" (
+  SET strFILE_VERSION=%strFILE_VERSION%-dirty
+)
 SET tmp=
 GOTO :EOF
 
@@ -566,16 +565,6 @@ GOTO :EOF
 SET _input_version=%1
 CALL git reset --hard %_input_version%  >NUL
 SET _input_version=
-GOTO :EOF
-
-:check_dirty_vesion
-
-SET _tmp=%1
-::echo mark_dirty_vesion-%_tmp%
-if [%_tmp%] NEQ [] (
-  SET strFILE_VERSION=%strFILE_VERSION%-dirty
-)
-SET _tmp=
 GOTO :EOF
 
 :: --------------------
