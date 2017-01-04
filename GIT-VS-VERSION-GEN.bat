@@ -119,6 +119,7 @@ REM ====================
 :: --------------------
 :: The following variables are used for the final version output.
 ::    String Version:  Major.Minor.Fix.Stage#[.Patches.SHA1[.dirty]]
+::ECHO "ENTER_INIT_VARS."
 SET strFILE_VERSION=
 
 ::    Digital Version: Major, Minor, Fix, Patches
@@ -135,7 +136,7 @@ SET fPRE_RELEASE=0
 :: Supporting StringFileInfo - not used for clean release builds.
 SET strPRIVATE_BUILD=
 SET strCOMMENT=
-
+::ECHO "LEAVE INIT_VARS."
 GOTO :EOF
 
 :: --------------------
@@ -143,6 +144,7 @@ GOTO :EOF
 :: --------------------
 :: Precedence is Git, VERSION_FILE, then DEFAULT_VERSION.
 :: Check if git is available by testing git describe.
+::ECHO "ENTER GET_VERSION_STRING"
 CALL git describe>NUL 2>&1
 IF NOT ERRORLEVEL 1 (
   SET fGIT_AVAILABLE=1
@@ -161,14 +163,18 @@ IF NOT ERRORLEVEL 1 (
 )
 SET strFILE_VERSION=%strFILE_VERSION:~1%
 SET strFILE_VERSION=%strFILE_VERSION:-=.%
+::ECHO %strFILE_VERSION%
+::ECHO "LEAVE GET_VERSION_STRING"
 GOTO :EOF
 
 :: --------------------
 :PARSE_GIT_STRING
 :: --------------------
-FOR /F "tokens=*" %%A IN ('"git describe --abbrev=5 HEAD"') DO (
-  SET strFILE_VERSION=%%A
+::FOR /F "tokens=*" %%A IN ('"git describe --abbrev=5 HEAD"') DO (
+FOR /F "tokens=2 delims=v" %%A IN ('"git describe --abbrev=5 HEAD"') DO (
+  SET strFILE_VERSION=v%%A
 )
+::echo PARSE_GIT_STRING_A-%strFILE_VERSION%
 :: If HEAD is dirty then this is not part of an official build and even if a
 :: commit hasn't been made it should still be marked as dirty and patched.
 SET tmp=
@@ -182,6 +188,7 @@ IF ERRORLEVEL 1 (
     SET fLEAVE_NOW=1
   )
 )
+
 FOR /F %%A IN ('git diff-index --name-only HEAD --') DO SET tmp=%%A
 IF NOT "%tmp%" == "" (
   SET strFILE_VERSION=%strFILE_VERSION%-dirty
@@ -230,6 +237,7 @@ GOTO :EOF
 :: --------------------
 :SET_STAGE_PARTS
 :: --------------------
+::ECHO SET_STAGE_PARTS ENTER
 SET nbSTAGE_VERSION=
 SET tmp=%strTMP_STAGE_PART:~,1%
 IF "%tmp%" == "a" (
@@ -252,6 +260,7 @@ IF "%tmp%" == "a" (
     )
   )
 )
+::ECHO SET_STAGE_PARTS LEAVE
 GOTO :EOF
 
 :: --------------------
@@ -260,6 +269,7 @@ GOTO :EOF
 :: [PARAM in] %1 - the numeric portion of strTMP_STAGE_PART and the remainder.
 ::                 ie: rc1.13.g28456 is passed in as 1.13.g28456
 FOR /F "tokens=1 delims=." %%A IN ("%1") DO SET nbSTAGE_VERSION=%%A
+::ECHO %%A
 SET strCOMMENT=%strCOMMENT% %nbSTAGE_VERSION%
 IF NOT [%1] == [] SET fPRE_RELEASE=1
 GOTO :EOF
@@ -269,6 +279,7 @@ GOTO :EOF
 :: --------------------
 :: Read in the description of the current commit in terms of the earliest
 :: release stream tag.
+::ECHO GET_GIT_PATCHES_ENTER
 IF "%COUNT_PATCHES_FROM%" == "major" (
   SET tmp=v%nbMAJOR_PART%.0.0*
 ) ELSE (
@@ -280,22 +291,26 @@ IF "%COUNT_PATCHES_FROM%" == "major" (
 )
 SET git_cmd=git for-each-ref --count=1 --format=%%(refname:short)
 SET git_cmd=%git_cmd% --sort=taggerdate refs/tags/%tmp%
-FOR /F "tokens=* usebackq" %%A IN (`"%git_cmd%"`) DO SET tmp=%%A
+FOR /F "tokens=2 delims=v usebackq" %%A IN (`"%git_cmd%"`) DO SET tmp=v%%A
 SET git_cmd=
 
+::ECHO %tmp% 
 :: Full version releases have the Git patch count at the first '-' while
 :: pre-release versions have it at the second.
 IF [%USE_PRERELEASE_TAGS%] == [0] (
   FOR /F "tokens=2 delims=-" %%A IN ('"git describe --match %tmp%"') DO (
+::    ECHO %%A
     SET nbPATCHES_PART=%%A
   )
 ) ELSE (
   FOR /F "tokens=3 delims=-" %%A IN ('"git describe --match %tmp%"') DO (
+::    ECHO %%A
     SET nbPATCHES_PART=%%A
   )
 )
 IF NOT DEFINED nbPATCHES_PART SET nbPATCHES_PART=0
 SET tmp=
+::ECHO GET_GIT_PATCHES_LEAVE
 GOTO :EOF
 
 :: --------------------
@@ -304,8 +319,9 @@ GOTO :EOF
 :: PATCHED indicates that the build is taking place at a non-tagged commit.
 SET tmp=v%nbMAJOR_PART%.%nbMINOR_PART%.%nbFIX_PART%%strSTAGE_PART%%nbSTAGE_VERSION%
 IF DEFINED fGIT_AVAILABLE (
-  FOR /F "tokens=*" %%A IN ('"git describe HEAD"') DO SET tmp2=%%A
+  FOR /F "tokens=2 delims=v" %%A IN ('"git describe HEAD"') DO SET tmp2=%%A
 )
+set tmp2=v%tmp2%
 IF NOT "%tmp%" == "%tmp2%" SET fPATCHED=1
 
 :: When HEAD is dirty the build is considered both PRIVATE and PATCHED
@@ -488,7 +504,7 @@ ECHO TAG, Version, Hex, Maj, Min, Fix, Patches (from %COUNT_PATCHES_FROM%), PreR
 
 SET git_cmd=git for-each-ref --format=%%(refname:short) refs/tags/
 FOR /F "tokens=* usebackq" %%A IN (`"%git_cmd%"`) DO (
-  CALL git reset --hard %%A >NUL
+  CALL :git_reset_hard %%A
   CALL :TEST_VERSION %%A
 )
 
@@ -542,6 +558,13 @@ ECHO.
 :: Cleanup the directory
 POPD
 RMDIR /S /Q %git-vs-version-test-dir%
+GOTO :EOF
+
+:: git reset_hard
+:git_reset_hard
+SET _input_version=%1
+CALL git reset --hard %_input_version%  >NUL
+SET _input_version=
 GOTO :EOF
 
 :: --------------------
